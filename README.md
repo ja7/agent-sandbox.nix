@@ -55,17 +55,18 @@ If you want to keep the original command name as the alias, change the `outName`
 
 `mkSandbox`, the library's entrypoint, accepts the following arguments:
 
-| Argument | Required | Description |
-|---|---|---|
-| `pkg` | yes | Package containing the binary to wrap |
-| `binName` | yes | Name of the binary inside `pkg/bin/` |
-| `outName` | yes | Name for the resulting wrapped binary and the command to invoke it with |
-| `allowedPackages` | yes | Packages whose `bin/` dirs form the sandbox PATH. `bash` and `cacert` are provided by default — the sandbox needs a shell to run, and `cacert` is required for HTTPS to work. |
-| `stateDirs` | no | Directories the agent can read/write (e.g. `~/.config/claude`) |
-| `stateFiles` | no | Individual files the agent can read/write |
-| `extraEnv` | no | Additional environment variables as an attrset |
-| `restrictNetwork` | no | When `true`, network is limited to `allowedDomains` (default `false`) |
-| `allowedDomains` | no | Domains the sandbox can reach when `restrictNetwork = true`. Attrset mapping domains to `"*"` or a list of HTTP methods, or a list of domain strings (all methods allowed). |
+| Argument            | Required | Description                                                                                                                                                                   |
+|---------------------|---|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `pkg`               | yes | Package containing the binary to wrap                                                                                                                                         |
+| `binName`           | yes | Name of the binary inside `pkg/bin/`                                                                                                                                          |
+| `outName`           | yes | Name for the resulting wrapped binary and the command to invoke it with                                                                                                       |
+| `allowedPackages`   | yes | Packages whose `bin/` dirs form the sandbox PATH. `bash` and `cacert` are provided by default — the sandbox needs a shell to run, and `cacert` is required for HTTPS to work. |
+| `stateDirs`         | no | Directories the agent can read/write (e.g. `~/.config/claude`)                                                                                                                |
+| `stateFiles`        | no | Individual files the agent can read/write                                                                                                                                     |
+| `extraEnv`          | no | Additional environment variables as an attrset                                                                                                                                |
+| `restrictNetwork`   | no | When `true`, network is limited to `allowedDomains` (default `false`)                                                                                                         |
+| `restrictNixStore`  | no | When `true`, nix store is limited to `allowedPackages` (default `true`)                                                                                                       |
+| `allowedDomains`    | no | Domains the sandbox can reach when `restrictNetwork = true`. Attrset mapping domains to `"*"` or a list of HTTP methods, or a list of domain strings (all methods allowed).   |
 
 A minimal example — the arguments are the same whether you use a flake or a `shell.nix`:
 

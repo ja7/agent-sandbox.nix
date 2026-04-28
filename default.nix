@@ -137,7 +137,7 @@ let
            need to bind-mount the real paths.
   */
   mkLinuxSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ]
-    , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false
+    , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false, restrictNixStore ? true
     , allowedDomains ? [ ] }:
     let
       implicitPackages = [ pkgs.cacert bashWrapper ];
@@ -264,12 +264,20 @@ let
         ${gitDetectionBashStr}
 
         # Build per-path ro-bind flags for the nix store closure
+        # unless restrictNixStore, set to false allow nix access to install packages with nix
+
         CLOSURE_BINDS=""
-        BOUND_PREFIXES=()
-        while IFS= read -r storePath; do
-          CLOSURE_BINDS="$CLOSURE_BINDS --ro-bind $storePath $storePath"
-          BOUND_PREFIXES+=("$storePath")
-        done < ${closurePathsFile}
+        if ${if restrictNixStore then "true" else "false"}; then
+            BOUND_PREFIXES=()
+            while IFS= read -r storePath; do
+              CLOSURE_BINDS="$CLOSURE_BINDS --ro-bind $storePath $storePath"
+              BOUND_PREFIXES+=("$storePath")
+            done < ${closurePathsFile}
+        else
+            CLOSURE_BINDS="$CLOSURE_BINDS --bind /nix/var/nix/daemon-socket/socket /nix/var/nix/daemon-socket/socket";
+            CLOSURE_BINDS="$CLOSURE_BINDS --ro-bind /nix/store /nix/store";
+            CLOSURE_BINDS="$CLOSURE_BINDS --ro-bind /etc/nix/nix.conf /etc/nix/nix.conf";
+        fi
 
         ${symlinkResolutionBashStr}
         ${conditionalNetworkingParams.proxyStartupBashStr}
@@ -460,7 +468,7 @@ let
        sandboxing on macOS.
   */
   mkDarwinSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ]
-    , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false
+    , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false, restrictNixStore ? true
     , allowedDomains ? [ ] }:
     let
       implicitPackages = [ pkgs.cacert bashWrapper ];
