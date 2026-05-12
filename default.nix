@@ -93,6 +93,8 @@ let
            $REPO_ROOT  — the git repo root, so git commands and reads of
                          files outside CWD work. CWD and GIT_DIR are
                          mounted rw on top of this.
+          readOnlyDirs - each path gets a --ro-bind
+
          Read-write bind mounts:
            $CWD        — the project directory (always)
            stateDirs   — each path gets a --bind (e.g., ~/.config/claude)
@@ -136,7 +138,7 @@ let
            NixOS symlinks these — if the target is outside /etc, you may
            need to bind-mount the real paths.
   */
-  mkLinuxSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ]
+  mkLinuxSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ] , readOnlyDirs ? []
     , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false, restrictNixStore ? true
     , allowedDomains ? [ ] }:
     let
@@ -148,6 +150,8 @@ let
         (map (file: ''touch "${file}"'') stateFiles);
       bindDirsStr = builtins.concatStringsSep " "
         (map (dir: ''--bind "${dir}" "${dir}"'') stateDirs);
+      readOnlyDirsStr = builtins.concatStringsSep " "
+        (map (dir: ''--ro-bind "${dir}" "${dir}"'') readOnlyDirs);
       # Adds each stateDir to the BOUND_PREFIXES shell array at runtime
       stateDirsBoundPrefixBashStr = builtins.concatStringsSep "\n"
         (map (dir: ''BOUND_PREFIXES+=("${dir}")'') stateDirs);
@@ -174,6 +178,9 @@ let
         # Scan stateDirs for internal symlinks and bind their resolved targets
         ${builtins.concatStringsSep "\n"
         (map symlinkHelpers.mkScanDirBashStr stateDirs)}
+        # Scan readOnlyDirs for internal symlinks and bind their resolved targets
+        ${builtins.concatStringsSep "\n"
+        (map symlinkHelpers.mkScanDirBashStr readOnlyDirs)}
       '';
 
       extraEnvStr = builtins.concatStringsSep " "
@@ -297,6 +304,7 @@ let
           $REPO_BIND \
           --bind "$CWD" "$CWD" \
           ${bindDirsStr} \
+          ${readOnlyDirsStr} \
           $STATE_FILE_BINDS \
           $SYMLINK_PARENT_DIRS \
           $readonlyStateFileSymlinks \
@@ -429,6 +437,9 @@ let
          (subpath ...) so all contents are accessible. Files use
          (literal ...) for exact-path access only.
 
+       readOnlyDirs :
+         Ignored for now on Mac
+
      ## Debugging tips
 
        "Operation not permitted" / "denied by sandbox":
@@ -467,7 +478,7 @@ let
        mentions it. There is no supported replacement for unprivileged
        sandboxing on macOS.
   */
-  mkDarwinSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ]
+  mkDarwinSandbox = { pkg, binName, outName, allowedPackages, stateDirs ? [ ], readOnlyDirs ? []
     , stateFiles ? [ ], extraEnv ? { }, restrictNetwork ? false, restrictNixStore ? true
     , allowedDomains ? [ ] }:
     let
