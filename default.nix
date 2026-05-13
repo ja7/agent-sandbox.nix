@@ -305,6 +305,9 @@ let
           --bind "$CWD" "$CWD" \
           ${bindDirsStr} \
           ${readOnlyDirsStr} \
+          --symlink usr/lib /lib \
+          --symlink usr/lib64 /lib64 \
+          --symlink usr/sbin /sbin \
           $STATE_FILE_BINDS \
           $SYMLINK_PARENT_DIRS \
           $readonlyStateFileSymlinks \
